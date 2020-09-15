@@ -205,7 +205,7 @@
       !if @BYPASS_SIGNING@ == 1
         !warning "BYPASS_SIGNING set - installer will not be signed"
       !else 
-        !if "%HF_PFX_FILE%" == "" || "%HF_PFX_PASSPHRASE%" == ""
+        !if "%HF_PFX_FILE%" == ""
           !warning "PFX not configured - installer will not be signed"
         !else
           !system '"@SIGNTOOL_EXECUTABLE@" sign /fd sha256 /f %HF_PFX_FILE% /p %HF_PFX_PASSPHRASE% /tr http://timestamp.comodoca.com?td=sha256 /td SHA256 $%TEMP%\@UNINSTALLER_NAME@' = 0
