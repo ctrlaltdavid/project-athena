@@ -40,11 +40,11 @@ jobs:
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:
-    - name: Report build number
+    - name: Report Build Number
       shell: bash
       run: |
         echo "Build number: $BUILD_NUMBER"
-    - name: Configure Build Environment 1
+    - name: Configure build environment 1
       shell: bash
       id: buildenv1
       run: |
@@ -80,7 +80,7 @@ jobs:
           # echo "::set-env name=HF_PFX_FILE::${{runner.workspace}}\build\codesign.pfx"
         fi
     # Configuration is broken into two steps because you can't set an env var and also reference it in the same step
-    - name: Configure Build Environment 2
+    - name: Configure build environment 2
       shell: bash
       run: |
         echo "${{ steps.buildenv1.outputs.symbols_archive }}"
@@ -93,7 +93,7 @@ jobs:
           echo ::set-env name=CLIENT_ONLY::TRUE
           echo ::set-env name=INSTALLER::Vircadia-Alpha-Interface-$BUILD_NUMBER-$GIT_COMMIT_SHORT.$INSTALLER_EXT
         fi
-    - name: Clear Working Directory
+    - name: Clear working directory
       if: startsWith(matrix.os, 'windows')
       shell: bash
       working-directory: ${{runner.workspace}}
@@ -112,34 +112,34 @@ jobs:
         sudo apt update || exit 1
         echo "Installing apt packages"
         sudo apt install -y ${{ matrix.apt-dependencies }} || exit 1
-        echo "Installing boto3"
-        # $PYTHON_EXEC -m pip install boto3 PyGithub
-        # #######: Try pip3 command ...
-        pip3 install boto3 PyGithub || exit 1
-    - name: Create Build Environment
+    - name: Install Python modules
+      if: !startsWith(matrix.os, 'ubuntu')
+      shell: bash
+      run: $PYTHON_EXEC -m pip install boto3 PyGithub
+    - name: Create build environment
       shell: bash
       run: cmake -E make_directory "${{runner.workspace}}/build"
     - name: Configure CMake
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DVCPKG_BUILD_TYPE=release -DCLIENT_ONLY:BOOLEAN=$CLIENT_ONLY -DBYPASS_SIGNING:BOOLEAN=TRUE $CMAKE_EXTRA
-    - name: Build Application
+    - name: Build application
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --target $APP_NAME $CMAKE_BUILD_EXTRA
-    - name: Build Domain Server
+    - name: Build domain server
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --target domain-server $CMAKE_BUILD_EXTRA
-    - name: Build Assignment Client
+    - name: Build assignment client
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --target assignment-client $CMAKE_BUILD_EXTRA
-    - name: Build Console
+    - name: Build console
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --target packaged-server-console $CMAKE_BUILD_EXTRA
-    - name: Build Installer
+    - name: Build installer
       working-directory: ${{runner.workspace}}/build
       shell: bash
       run: |
@@ -165,7 +165,7 @@ jobs:
           done
         }
         retry cmake --build . --config $BUILD_TYPE --target package $CMAKE_BUILD_EXTRA
-    #- name: Sign Installer (Windows)
+    #- name: Sign installer (Windows)
     #  if: startsWith(matrix.os, 'windows')
     #  shell: powershell
     #  working-directory: C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64
@@ -177,21 +177,21 @@ jobs:
       run: |
         echo "Disk usage:"
         df -h
-    - name: Output Installer Logs
+    - name: Output installer logs
       if: failure() && startsWith(matrix.os, 'windows')
       shell: bash
       working-directory: ${{runner.workspace}}/build
       run: cat ./_CPack_Packages/win64/NSIS/NSISOutput.log
-    - name: Upload Artifact
-      if: matrix.os != 'ubuntu-latest'
+    - name: Upload artifact
+      if: !startsWith(matrix.os, 'ubuntu')
       shell: bash
       working-directory: ${{runner.workspace}}/build	
       env:	
         AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}	
       run: $PYTHON_EXEC $GITHUB_WORKSPACE/tools/ci-scripts/upload.py 
-    #- name: Archive Symbols
-    #  if: (matrix.os == 'windows-latest') || (matrix.os == 'macOS-latest')
+    #- name: Archive symbols
+    #  if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
     #  working-directory: ${{runner.workspace}}
     #  shell: bash
     #  run: |
@@ -200,21 +200,21 @@ jobs:
     #    find "./build" \( -path '*/tools/gpu-frame-player/*' -or -path '*/interface/*' -or -path '*/plugins/*' \) -regex ".*\.$SYMBOL_REGEX" -exec cp -r {} $SYMBOLS_TEMP \;
     #    cd $SYMBOLS_TEMP
     #    $ZIP_COMMAND $ZIP_ARGS ../${{ steps.buildenv1.outputs.symbols_archive }} .
-    #- name: Upload Symbols
-    #  if: (matrix.os == 'windows-latest') || (matrix.os == 'macOS-latest')
+    #- name: Upload symbols
+    #  if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
     #  working-directory: ${{runner.workspace}}
     #  shell: bash
     #  run: |
     #    curl --data-binary @${{ steps.buildenv1.outputs.symbols_archive }} "$CMAKE_BACKTRACE_URL/post?format=symbols&token=$CMAKE_BACKTRACE_SYMBOLS_TOKEN&upload_file=${{steps.buildenv1.outputs.symbols_archive}}&tag=$BUILD_NUMBER"
-    # - name: Debug List Symbols
-    #   if: (matrix.os == 'windows-latest') || (matrix.os == 'macOS-latest')
-    #   working-directory: ${{runner.workspace}}
-    #   shell: bash
-    #   run: |
-    #     unzip -v "${{runner.workspace}}/${{ steps.buildenv1.outputs.symbols_archive }}"
-    # - name: Debug Upload Symbols Artifact 
-    #   if: (matrix.os == 'windows-latest') || (matrix.os == 'macOS-latest')
-    #   uses: actions/upload-artifact@v1
-    #   with:
-    #     name: symbols
-    #     path: ${{runner.workspace}}/${{ steps.buildenv1.outputs.symbols_archive }}
+    #- name: Debug list symbols
+    #  if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
+    #  working-directory: ${{runner.workspace}}
+    #  shell: bash
+    #  run: |
+    #    unzip -v "${{runner.workspace}}/${{ steps.buildenv1.outputs.symbols_archive }}"
+    #- name: Upload debug list symbols
+    #  if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
+    #  uses: actions/upload-artifact@v1
+    #  with:
+    #    name: symbols
+    #    path: ${{runner.workspace}}/${{ steps.buildenv1.outputs.symbols_archive }}
