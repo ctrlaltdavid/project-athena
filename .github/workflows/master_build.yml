@@ -103,8 +103,8 @@ jobs:
         submodules: true
         fetch-depth: 1
     - name: Install dependencies
-      shell: bash
       if: startsWith(matrix.os, 'ubuntu')
+      shell: bash
       run: |
         echo "Installing Python Modules:"
         pip3 install distro || exit 1
@@ -113,7 +113,7 @@ jobs:
         echo "Installing apt packages"
         sudo apt install -y ${{ matrix.apt-dependencies }} || exit 1
     - name: Install Python modules
-      if: !startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
       shell: bash
       run: $PYTHON_EXEC -m pip install boto3 PyGithub
     - name: Create build environment
@@ -183,7 +183,7 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: cat ./_CPack_Packages/win64/NSIS/NSISOutput.log
     - name: Upload artifact
-      if: !startsWith(matrix.os, 'ubuntu')
+      if: startsWith(matrix.os, 'windows') || startsWith(matrix.os, 'macOS')
       shell: bash
       working-directory: ${{runner.workspace}}/build	
       env:	
