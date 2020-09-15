@@ -36,7 +36,7 @@ jobs:
           build_type: full
           apt-dependencies: mesa-common-dev libegl1 libglvnd-dev libdouble-conversion1 libpulse0
     fail-fast: false
-  runs-on: ${{matrix.os}}
+    runs-on: ${{matrix.os}}
     steps:
     - name: Report build number
       shell: bash
