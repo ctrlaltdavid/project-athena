@@ -27,15 +27,16 @@ env:
   PreferredToolArchitecture: X64
 
 jobs:
-  strategy:
-    matrix:
-      os: [windows-latest, macOS-latest, ubuntu-18.04]
-      build_type: [full, client]
-      include:
-        - os: ubuntu-18.04
-          build_type: full
-          apt-dependencies: mesa-common-dev libegl1 libglvnd-dev libdouble-conversion1 libpulse0
-    fail-fast: false
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macOS-latest, ubuntu-18.04]
+        build_type: [full, client]
+        include:
+          - os: ubuntu-18.04
+            build_type: full
+            apt-dependencies: mesa-common-dev libegl1 libglvnd-dev libdouble-conversion1 libpulse0
+      fail-fast: false
     runs-on: ${{matrix.os}}
     steps:
     - name: Report build number
