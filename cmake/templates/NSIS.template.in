@@ -201,6 +201,8 @@
 
     ; The Inner invocation has written an uninstaller binary for us.
     ; We need to sign it if it's a production or PR build.
+    !warning "####### HF_PFX_FILE='%HF_PFX_FILE%'"
+    !warning "####### BYPASS_SIGNING='@BYPASS_SIGNING@'"
     !if @PRODUCTION_BUILD@ == 1
       !if @BYPASS_SIGNING@ == 1
         !warning "BYPASS_SIGNING set - installer will not be signed"
